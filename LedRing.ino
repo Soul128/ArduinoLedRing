@@ -43,9 +43,6 @@ void loop() {
   }
 
   interpolateRGB();
-  for (int i = 0; i < NUMPIXELS; i++) {
-    pixels.setPixelColor(i, pixels.Color((int)current[i][0], (int)current[i][1], (int)current[i][2]));
-  }
   pixels.show();
 
   newLightValCounter += delayval;
@@ -57,5 +54,8 @@ void interpolateRGB() {
     for (int x = 0; x <= 2; x++) {
       current[i][x] += ((target[i][x] - current[i][x]) * transitionSpeed);
     }
+  }
+  for (int i = 0; i < NUMPIXELS; i++) {
+    pixels.setPixelColor(i, pixels.Color((int)current[i][0], (int)current[i][1], (int)current[i][2]));
   }
 }
