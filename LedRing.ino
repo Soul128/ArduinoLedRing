@@ -6,13 +6,15 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ80
 
 int newLightValCounter = 0;
 
-float transitionSpeed = 0.05;
+float transitionSpeed = 0.01;
 
-int delayval = 1000 / 10;
-int newLightVal = delayval * 2;
+int delayval = 1000 / 100;
+int newLightVal = delayval * 50;
 
 float current[NUMPIXELS][3] = {};
 float target[NUMPIXELS][3] = {};
+float hueShift = 0;
+float hueShiftSpeed = 100;
 
 void setup() {
   for (int i = 0; i < NUMPIXELS; i++) {
@@ -27,35 +29,60 @@ void setup() {
 void loop() {
   if (newLightValCounter >= newLightVal) {
     newLightValCounter = 0;
-    for (int i = 0; i <= 4; i++) {
-      int rndLight = random(0, 12);
-      int intensity = random(0, 17) * random(0, 17);
-      if (intensity > 128) {
-        target[rndLight][0] = intensity * 1.0;
-        target[rndLight][1] = intensity * 1.0;
-        target[rndLight][2] = intensity * 1.0;
-      } else {
-        target[rndLight][0] = intensity * 0.1;
-        target[rndLight][1] = intensity * 0.4;
-        target[rndLight][2] = intensity * 0.5;
-      }
-    }
+  randomBlueColor(255, 255);
   }
 
-  interpolateRGB();
+  interpolateRGB(true); 
+
+  // rotateRGB(255, 255);
   pixels.show();
 
   newLightValCounter += delayval;
   delay(delayval);
 }
 
-void interpolateRGB() {
+void randomHue(int sat, int val) {
+  for (int i = 0; i < NUMPIXELS; i++) {
+    target[i][0] = (float)random(0, 65534);
+    target[i][1] = sat;
+    target[i][2] = val;
+  }
+}
+
+void randomBlueColor(int sat, int val) {
+  for (int i = 0; i < NUMPIXELS; i++) {
+    // int rndLight = random(0, 12);
+    float hue = 32767 + random(-20000, 20000);
+    target[i][0] = hue;
+    target[i][1] = sat;
+    target[i][2] = val;
+  }
+}
+
+void rotateRGB(int sat, int val) {
+  hueShift += hueShiftSpeed;
+  if (hueShift > 65535)
+    hueShift = 0;
+
+  for (float i = 0; i < NUMPIXELS; i++) {
+    int hue = hueShift + (i / NUMPIXELS) * 65535;
+    if (hue > 65535)
+      hue -= 65535;
+    pixels.setPixelColor(i, pixels.ColorHSV(hue, sat, val));
+  }
+}
+
+
+void interpolateRGB(bool hsv) {
   for (int i = 0; i < NUMPIXELS; i++) {
     for (int x = 0; x <= 2; x++) {
       current[i][x] += ((target[i][x] - current[i][x]) * transitionSpeed);
     }
   }
   for (int i = 0; i < NUMPIXELS; i++) {
-    pixels.setPixelColor(i, pixels.Color((int)current[i][0], (int)current[i][1], (int)current[i][2]));
+    if (hsv)
+      pixels.setPixelColor(i, pixels.ColorHSV((uint16_t)current[i][0], (int)current[i][1], (int)current[i][2]));
+    else
+      pixels.setPixelColor(i, pixels.Color((int)current[i][0], (int)current[i][1], (int)current[i][2]));
   }
 }
